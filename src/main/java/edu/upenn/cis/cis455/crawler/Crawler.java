@@ -1,74 +1,57 @@
 package edu.upenn.cis.cis455.crawler;
 
-import edu.upenn.cis.cis455.crawler.utils.URLInfo;
 import edu.upenn.cis.cis455.storage.StorageFactory;
 import edu.upenn.cis.cis455.storage.StorageInterface;
 
-
 public class Crawler implements CrawlMaster {
+    ///// TODO: you'll need to flesh all of this out. You'll need to build a thread
+    // pool of CrawlerWorkers etc.
+
     static final int NUM_WORKERS = 10;
 
     public Crawler(String startUrl, StorageInterface db, int size, int count) {
         // TODO: initialize
     }
 
-    ///// TODO: you'll need to flesh all of this out.  You'll need to build a thread
-    // pool of CrawlerWorkers etc. and to implement the functions below which are
-    // stubs to compile
-    
     /**
      * Main thread
      */
-    public void start() {}
-    
-    /**
-     * Returns true if it's permissible to access the site right now
-     * eg due to robots, etc.
-     */
-    public boolean isOKtoCrawl(String site, int port, boolean isSecure) { return true; }
+    public void start() {
+    }
 
-    /**
-     * Returns true if the crawl delay says we should wait
-     */
-    public boolean deferCrawl(String site) { return false; }
-    
-    /**
-     * Returns true if it's permissible to fetch the content,
-     * eg that it satisfies the path restrictions from robots.txt
-     */
-    public boolean isOKtoParse(URLInfo url) { return true; }
-    
-    /**
-     * Returns true if the document content looks worthy of indexing,
-     * eg that it doesn't have a known signature
-     */
-    public boolean isIndexable(String content) { return true; }
-    
     /**
      * We've indexed another document
      */
-    public void incCount() { }
-    
+    @Override
+    public void incCount() {
+    }
+
     /**
-     * Workers can poll this to see if they should exit, ie the
-     * crawl is done
+     * Workers can poll this to see if they should exit, ie the crawl is done
      */
-    public boolean isDone() { return true; }
-    
+    @Override
+    public boolean isDone() {
+        return true;
+    }
+
     /**
      * Workers should notify when they are processing an URL
      */
-    public void setWorking(boolean working) {}
-    
+    @Override
+    public void setWorking(boolean working) {
+    }
+
     /**
-     * Workers should call this when they exit, so the master
-     * knows when it can shut down
+     * Workers should call this when they exit, so the master knows when it can shut
+     * down
      */
-    public void notifyThreadExited() {}
-    
+    @Override
+    public void notifyThreadExited() {
+    }
+
     /**
-     * Main program:  init database, start crawler, wait
-     * for it to notify that it is done, then close.
+     * Main program: init database, start crawler, wait for it to notify that it is
+     * done, then close.
      */
     public static void main(String args[]) {
         if (args.length < 3 || args.length > 5) {
