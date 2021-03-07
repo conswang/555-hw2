@@ -37,7 +37,7 @@ public class WebInterface {
         }
 
 
-        before("/*", "POST", testIfLoggedIn);
+        before("/*", "*/*", testIfLoggedIn);
         // TODO:  add /register, /logout, /index.html, /, /lookup
         //post("/register", new RegistrationHandler(database));
         post("/login", new LoginHandler(database));
