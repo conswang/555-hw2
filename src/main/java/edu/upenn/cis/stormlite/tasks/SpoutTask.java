@@ -51,4 +51,9 @@ public class SpoutTask implements ITask {
 	public String getStream() {
 		return spout.getExecutorId();
 	}
+
+	@Override
+	public String toString() {
+		return spout.getClass().getName() + "/" + spout.getExecutorId();
+	}
 }

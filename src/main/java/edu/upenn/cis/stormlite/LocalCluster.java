@@ -96,9 +96,11 @@ public class LocalCluster implements Runnable {
 			if (task == null)
 				Thread.yield();
 			else {
+				log.debug("Task: " + task.toString());
 				executor.execute(task);
 			}
 		}
+		executor.shutdown();
 	}
 	
 	private void scheduleSpouts() {

@@ -49,4 +49,8 @@ public class BoltTask implements ITask {
 		return bolt.getExecutorId();
 	}
 
+	@Override
+	public String toString() {
+		return bolt.getClass().getName() + "/" + bolt.getExecutorId() + ": " + tuple.toString();
+	}
 }
