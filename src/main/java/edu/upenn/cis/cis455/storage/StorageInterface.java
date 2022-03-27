@@ -10,7 +10,7 @@ public interface StorageInterface {
     /**
      * Add a new document, getting its ID
      */
-    public int addDocument(String url, String documentContents);
+    public boolean addDocument(String url, String documentContents);
 
     /**
      * Retrieves a document's contents by URL
@@ -20,7 +20,7 @@ public interface StorageInterface {
     /**
      * Adds a user and returns an ID
      */
-    public int addUser(String username, String password);
+    public boolean addUser(String username, String password);
 
     /**
      * Tries to log in the user, or else throws a HaltException

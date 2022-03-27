@@ -19,3 +19,4 @@ Configuration:
       level: trace
       AppenderRef:
         ref: Console
+   

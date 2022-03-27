@@ -25,7 +25,7 @@ public class LoginHandler implements Route {
         String user = req.queryParams("username");
         String pass = req.queryParams("password");
 
-        System.err.println("Login request for " + user + " and " + pass);
+        logger.debug("Login request for " + user + " and " + pass);
         if (db.getSessionForUser(user, pass)) {
             logger.debug("Logged in!");
             Session session = req.session();

@@ -38,7 +38,7 @@ public class Storage implements StorageInterface {
             // TODO: need to customize dbConfig more?
             DatabaseConfig dbConfig = new DatabaseConfig();
             dbConfig.setAllowCreate(true);
-            
+
             Database catalogDb = env.openDatabase(null, JAVA_CATALOG, dbConfig);
             javaCatalog = new StoredClassCatalog(catalogDb);
             userStore = env.openDatabase(null, USER_STORE, dbConfig);
@@ -64,10 +64,11 @@ public class Storage implements StorageInterface {
         return 0;
     }
 
+    // @768 can also use URL as the key for document content
     @Override
-    public int addDocument(String url, String documentContents) {
+    public boolean addDocument(String url, String documentContents) {
         // TODO Auto-generated method stub
-        return 0;
+        return false;
     }
 
     @Override
@@ -76,19 +77,21 @@ public class Storage implements StorageInterface {
         return null;
     }
 
+    // @768 We also allow you to change the interface to not use ids if you don’t want to
+    // create ids (so you can choose to look up users by username only). It’s just
+    // more efficient to lookup keys based on an integer instead of a string. 
     @Override
-    public int addUser(String username, String password) {
+    public boolean addUser(String username, String password) {
         // TODO: encrypt password with SHA-256
         userMap.put(username, password);
-        return 0;
+        return true;
     }
 
     @Override
     public boolean getSessionForUser(String username, String password) {
         // TODO: encrypt password with SHA-256
         if (userMap.containsKey(username)) {
-            String storedPassword = userMap.get(username);
-            return storedPassword.equals(password);
+            return userMap.get(username) == password;
         }
         return false;
     }
@@ -99,6 +102,10 @@ public class Storage implements StorageInterface {
         userStore.close();
 
         env.close();
+    }
+
+    void usersToString() {
+
     }
 
 }

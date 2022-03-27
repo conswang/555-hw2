@@ -12,15 +12,25 @@ import spark.Route;
 public class RegistrationHandler implements Route {
     Logger logger = LogManager.getLogger(RegistrationHandler.class);
     StorageInterface db;
-    
+
     public RegistrationHandler(StorageInterface db) {
         this.db = db;
     }
 
     @Override
-    public Object handle(Request request, Response response) throws HaltException {
-        // TODO Auto-generated method stub
-        return null;
+    public Object handle(Request req, Response res) throws HaltException {
+        String user = req.queryParams("username");
+        String pass = req.queryParams("password");
+        logger.debug("Login request for " + user + " and " + pass);
+
+        // TODO - error checking
+        boolean addedSuccessfully = db.addUser(user, pass);
+
+        // @878 register the status code with 200 success and return a page with body
+        // contains <a href> link to the main page
+        res.status(200);
+        res.header("Content-Type", "text/html");
+        return "<html><a href=\"/login-form.html\">Go to login page</a></html>";
     }
 
 }
