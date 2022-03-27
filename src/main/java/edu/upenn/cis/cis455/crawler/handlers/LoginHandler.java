@@ -5,9 +5,15 @@ import spark.Route;
 import spark.Response;
 import spark.HaltException;
 import spark.Session;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import edu.upenn.cis.cis455.storage.StorageInterface;
 
 public class LoginHandler implements Route {
+    Logger logger = LogManager.getLogger(LoginHandler.class);
+    
     StorageInterface db;
 
     public LoginHandler(StorageInterface db) {
@@ -21,14 +27,14 @@ public class LoginHandler implements Route {
 
         System.err.println("Login request for " + user + " and " + pass);
         if (db.getSessionForUser(user, pass)) {
-            System.err.println("Logged in!");
+            logger.debug("Logged in!");
             Session session = req.session();
 
             session.attribute("user", user);
             session.attribute("password", pass);
             resp.redirect("/index.html");
         } else {
-            System.err.println("Invalid credentials");
+            logger.debug("Invalid credentials");
             resp.redirect("/login-form.html");
         }
 

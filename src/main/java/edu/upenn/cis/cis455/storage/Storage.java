@@ -37,6 +37,8 @@ public class Storage implements StorageInterface {
             // Create class catalog database and other databases
             // TODO: need to customize dbConfig more?
             DatabaseConfig dbConfig = new DatabaseConfig();
+            dbConfig.setAllowCreate(true);
+            
             Database catalogDb = env.openDatabase(null, JAVA_CATALOG, dbConfig);
             javaCatalog = new StoredClassCatalog(catalogDb);
             userStore = env.openDatabase(null, USER_STORE, dbConfig);
@@ -76,13 +78,18 @@ public class Storage implements StorageInterface {
 
     @Override
     public int addUser(String username, String password) {
+        // TODO: encrypt password with SHA-256
         userMap.put(username, password);
         return 0;
     }
 
     @Override
     public boolean getSessionForUser(String username, String password) {
-        // TODO Auto-generated method stub
+        // TODO: encrypt password with SHA-256
+        if (userMap.containsKey(username)) {
+            String storedPassword = userMap.get(username);
+            return storedPassword.equals(password);
+        }
         return false;
     }
 

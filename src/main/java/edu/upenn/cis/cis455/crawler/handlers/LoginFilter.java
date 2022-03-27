@@ -8,29 +8,33 @@ import spark.Request;
 import spark.Filter;
 import spark.Response;
 
-
 public class LoginFilter implements Filter {
     Logger logger = LogManager.getLogger(LoginFilter.class);
-    
-    public LoginFilter(StorageInterface db) {}
+
+    public LoginFilter(StorageInterface db) {
+    }
 
     @Override
     public void handle(Request req, Response response) throws Exception {
         // Some basic logic to get you started
-        if (!req.pathInfo().equals("/login-form.html") &&
-                !req.pathInfo().equals("/login") &&
-                !req.pathInfo().equals("/register") &&
-                !req.pathInfo().equals("/register.html")) {
-            logger.info("Request is NOT login/registration");
+        if (!req.pathInfo().equals("/login-form.html") && !req.pathInfo().equals("/login")
+                && !req.pathInfo().equals("/register")
+                && !req.pathInfo().equals("/register.html")) {
+            logger.debug("Request is NOT login/registration");
             if (req.session(false) == null) {
-                logger.info("Not logged in - redirecting!");
+                // Since we are passing create = false, then if above returns a null session
+                // That means user does not currently have a valid jsessionid and needs to log
+                // in again
+                logger.debug("Not logged in - redirecting!");
                 response.redirect("/login-form.html");
             } else {
-                logger.info("Logged in!");
+                // Otherwise we are logged in and can access username from the
+                // req.attribute("user") in future functions
+                logger.debug("Logged in!");
                 req.attribute("user", req.session().attribute("user"));
             }
         } else {
-            logger.info("Request is LOGIN FORM");
+            logger.debug("Request is LOGIN FORM");
         }
     }
 }
