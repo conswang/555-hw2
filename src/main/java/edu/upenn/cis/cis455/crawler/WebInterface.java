@@ -5,6 +5,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static spark.Spark.*;
+
+import edu.upenn.cis.cis455.crawler.handlers.HomeHandler;
 import edu.upenn.cis.cis455.crawler.handlers.LoginFilter;
 import edu.upenn.cis.cis455.storage.StorageFactory;
 import edu.upenn.cis.cis455.storage.StorageInterface;
@@ -40,6 +42,9 @@ public class WebInterface {
 
         before("/*", "*/*", testIfLoggedIn);
         // TODO:  add /register, /logout, /index.html, /, /lookup
+        HomeHandler homeHandler = new HomeHandler();
+        get("/index.html", homeHandler);
+        get("/", homeHandler);
         post("/register", new RegistrationHandler(database));
         post("/login", new LoginHandler(database));
         

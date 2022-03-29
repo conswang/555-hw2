@@ -88,6 +88,9 @@ public class Storage implements StorageInterface {
     @Override
     public boolean addUser(String username, String password) {
         String passwordDigest = DigestUtils.sha256Hex(password);
+        if (userMap.containsKey(username)) {
+            return false;
+        }
         userMap.put(username, passwordDigest);
         logger.debug(mapToString("Users", userMap.entrySet().iterator()));
         return true;
