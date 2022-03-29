@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -86,17 +87,17 @@ public class Storage implements StorageInterface {
     // TODO: switch to int id and add username as secondary key
     @Override
     public boolean addUser(String username, String password) {
-        // TODO: encrypt password with SHA-256
-        userMap.put(username, password);
+        String passwordDigest = DigestUtils.sha256Hex(password);
+        userMap.put(username, passwordDigest);
         logger.debug(mapToString("Users", userMap.entrySet().iterator()));
         return true;
     }
 
     @Override
     public boolean getSessionForUser(String username, String password) {
-        // TODO: encrypt password with SHA-256
+        String passwordDigest = DigestUtils.sha256Hex(password);
         if (userMap.containsKey(username)) {
-            return userMap.get(username).equals(password);
+            return userMap.get(username).equals(passwordDigest);
         }
         return false;
     }
