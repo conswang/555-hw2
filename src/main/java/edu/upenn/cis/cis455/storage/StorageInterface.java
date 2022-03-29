@@ -1,7 +1,5 @@
 package edu.upenn.cis.cis455.storage;
 
-import java.io.Closeable;
-
 public interface StorageInterface {
 
     /**
@@ -12,7 +10,7 @@ public interface StorageInterface {
     /**
      * Add a new document, getting its ID
      */
-    public boolean addDocument(String url, String documentContents);
+    public void addDocument(String url, byte[] documentContents);
 
     /**
      * Retrieves a document's contents by URL

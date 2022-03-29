@@ -25,11 +25,14 @@ public class Storage implements StorageInterface {
 
     static final String JAVA_CATALOG = "java_catalog";
     static final String USER_STORE = "user_store";
+    static final String DOCUMENT_STORE = "document_store";
 
     StoredClassCatalog javaCatalog;
     Database userStore;
+    Database documentStore;
 
     StoredSortedMap<String, String> userMap;
+    StoredSortedMap<String, DocumentValue> documentMap;
 
     public Storage(String directory) {
         try {
@@ -45,6 +48,7 @@ public class Storage implements StorageInterface {
             Database catalogDb = env.openDatabase(null, JAVA_CATALOG, dbConfig);
             javaCatalog = new StoredClassCatalog(catalogDb);
             userStore = env.openDatabase(null, USER_STORE, dbConfig);
+            documentStore = env.openDatabase(null, DOCUMENT_STORE, dbConfig);
 
             // Bind stored sorted maps to the databases
             EntryBinding<String> userKeyBinding = new SerialBinding<String>(javaCatalog,
@@ -53,6 +57,12 @@ public class Storage implements StorageInterface {
                     String.class);
             userMap = new StoredSortedMap<String, String>(userStore, userKeyBinding,
                     userValueBinding, true);
+            EntryBinding<String> documentKeyBinding = new SerialBinding<String>(javaCatalog,
+                    String.class);
+            EntryBinding<DocumentValue> documentValueBinding = new SerialBinding<DocumentValue>(
+                    javaCatalog, DocumentValue.class);
+            documentMap = new StoredSortedMap<String, DocumentValue>(documentStore,
+                    documentKeyBinding, documentValueBinding, true);
 
         } catch (Exception e) {
             logger.fatal("Could not create database environment with directory {}: {}", directory,
@@ -69,15 +79,22 @@ public class Storage implements StorageInterface {
 
     // @768 can also use URL as the key for document content
     @Override
-    public boolean addDocument(String url, String documentContents) {
-        // TODO Auto-generated method stub
-        return false;
+    public void addDocument(String url, byte[] documentContents) {
+        // TODO: add content seen table and deal with aliases
+        DocumentValue value = new DocumentValue(System.currentTimeMillis(), documentContents);
+        documentMap.put(url, value);
     }
 
     @Override
     public String getDocument(String url) {
-        // TODO Auto-generated method stub
-        return null;
+        DocumentValue value = documentMap.get(url);
+        if (!value.isAlias()) {
+            if (value.content != null) {
+                return new String(value.content);
+            }
+        }
+        // TODO: add content seen table and deal with aliases
+        return "";
     }
 
     // @768 We also allow you to change the interface to not use ids if you don’t
@@ -109,6 +126,7 @@ public class Storage implements StorageInterface {
     public void close() throws DatabaseException {
         javaCatalog.close();
         userStore.close();
+        documentStore.close();
 
         env.close();
     }
