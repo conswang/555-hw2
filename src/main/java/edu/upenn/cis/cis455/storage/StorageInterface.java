@@ -1,5 +1,7 @@
 package edu.upenn.cis.cis455.storage;
 
+import java.io.Closeable;
+
 public interface StorageInterface {
 
     /**

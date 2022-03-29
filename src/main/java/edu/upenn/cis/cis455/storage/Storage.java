@@ -1,6 +1,8 @@
 package edu.upenn.cis.cis455.storage;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -77,13 +79,16 @@ public class Storage implements StorageInterface {
         return null;
     }
 
-    // @768 We also allow you to change the interface to not use ids if you don’t want to
+    // @768 We also allow you to change the interface to not use ids if you don’t
+    // want to
     // create ids (so you can choose to look up users by username only). It’s just
-    // more efficient to lookup keys based on an integer instead of a string. 
+    // more efficient to lookup keys based on an integer instead of a string.
+    // TODO: switch to int id and add username as secondary key
     @Override
     public boolean addUser(String username, String password) {
         // TODO: encrypt password with SHA-256
         userMap.put(username, password);
+        logger.debug(mapToString("Users", userMap.entrySet().iterator()));
         return true;
     }
 
@@ -91,7 +96,7 @@ public class Storage implements StorageInterface {
     public boolean getSessionForUser(String username, String password) {
         // TODO: encrypt password with SHA-256
         if (userMap.containsKey(username)) {
-            return userMap.get(username) == password;
+            return userMap.get(username).equals(password);
         }
         return false;
     }
@@ -104,8 +109,17 @@ public class Storage implements StorageInterface {
         env.close();
     }
 
-    void usersToString() {
-
+    static <K, V> String mapToString(String label, Iterator<Map.Entry<K, V>> iterator) {
+        StringBuilder res = new StringBuilder("\n--- " + label + " ---\n");
+        while (iterator.hasNext()) {
+            Map.Entry<K, V> entry = iterator.next();
+            res.append("Key: ");
+            res.append(entry.getKey().toString());
+            res.append("\nValue: ");
+            res.append(entry.getValue().toString());
+            res.append("\n");
+        }
+        return res.toString();
     }
 
 }

@@ -42,6 +42,13 @@ public class WebInterface {
         // TODO:  add /register, /logout, /index.html, /, /lookup
         post("/register", new RegistrationHandler(database));
         post("/login", new LoginHandler(database));
+        
+        // Clean up code before server exits
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                database.close();
+            }
+        });
 
         awaitInitialization();
     }
