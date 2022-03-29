@@ -10,7 +10,7 @@ import spark.Response;
 import spark.Route;
 
 public class RegistrationHandler implements Route {
-    Logger logger = LogManager.getLogger(RegistrationHandler.class);
+    final static Logger logger = LogManager.getLogger(RegistrationHandler.class);
     StorageInterface db;
 
     public RegistrationHandler(StorageInterface db) {
@@ -27,10 +27,15 @@ public class RegistrationHandler implements Route {
         boolean addedSuccessfully = db.addUser(user, pass);
         // @878 register the status code with 200 success and return a page with body
         // contains <a href> link to the main page
-        res.status(200);
-        res.header("Content-Type", "text/html");
-        return addedSuccessfully ? "<html><a href=\"/login-form.html\">Go to login page</a></html>"
-                : "<html>Could not add, username already taken</html>";
+        
+        res.type("text/html");
+        if (addedSuccessfully) {
+            res.status(200);
+            return "<html><a href=\"/login-form.html\">Go to login page</a></html>";
+        } else {
+            res.status(409);
+            return "<html>Account not registered; username is already taken!</html>";
+        }
     }
 
 }

@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 import edu.upenn.cis.cis455.storage.StorageInterface;
 
 public class LoginHandler implements Route {
-    Logger logger = LogManager.getLogger(LoginHandler.class);
+    final static Logger logger = LogManager.getLogger(LoginHandler.class);
     
     StorageInterface db;
 
@@ -32,6 +32,7 @@ public class LoginHandler implements Route {
 
             session.attribute("user", user);
             session.attribute("password", pass);
+            session.maxInactiveInterval(5 * 60);
             resp.redirect("/index.html");
         } else {
             logger.debug("Invalid credentials");

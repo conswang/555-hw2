@@ -9,7 +9,7 @@ import spark.Filter;
 import spark.Response;
 
 public class LoginFilter implements Filter {
-    Logger logger = LogManager.getLogger(LoginFilter.class);
+    final static Logger logger = LogManager.getLogger(LoginFilter.class);
 
     public LoginFilter(StorageInterface db) {
     }
