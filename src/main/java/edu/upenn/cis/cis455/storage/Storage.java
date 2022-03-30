@@ -45,6 +45,10 @@ public class Storage implements StorageInterface {
             EnvironmentConfig envConfig = new EnvironmentConfig();
             envConfig.setAllowCreate(true);
             env = new Environment(new File(directory), envConfig);
+            
+//            env.removeDatabase(null, CONTENT_SEEN_STORE);
+//            env.removeDatabase(null, USER_STORE);
+//            env.removeDatabase(null, DOCUMENT_STORE);
 
             // Create class catalog database and other databases
             // TODO: need to customize dbConfig more?
@@ -56,7 +60,6 @@ public class Storage implements StorageInterface {
             userStore = env.openDatabase(null, USER_STORE, dbConfig);
             documentStore = env.openDatabase(null, DOCUMENT_STORE, dbConfig);
             // Content seen store is temporary and requires its own dbConfig
-            // env.removeDatabase(null, CONTENT_SEEN_STORE);
             DatabaseConfig tempDbConfig = new DatabaseConfig();
             tempDbConfig.setAllowCreate(true);
             tempDbConfig.setTemporary(true);
@@ -130,15 +133,16 @@ public class Storage implements StorageInterface {
     }
 
     @Override
-    public String getDocument(String url) {
+    public byte[] getDocument(String url) {
         DocumentValue value = documentMap.get(url);
-        if (!value.isAlias()) {
-            if (value.content != null) {
-                return new String(value.content);
-            }
+        if (value == null) {
+            return null;
         }
-        // TODO: add content seen table and deal with aliases
-        return "";
+        if (!value.isAlias()) {
+            return value.content;
+        }
+        // This should only go 1 layer deep since all urls will just reference the original one
+        return getDocument(value.alias);
     }
 
     // @768 We also allow you to change the interface to not use ids if you don’t

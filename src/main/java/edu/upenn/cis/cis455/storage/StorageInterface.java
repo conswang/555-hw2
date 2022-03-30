@@ -18,7 +18,7 @@ public interface StorageInterface {
     /**
      * Retrieves a document's contents by URL
      */
-    public String getDocument(String url);
+    public byte[] getDocument(String url);
 
     /**
      * Adds a user and returns an ID

@@ -12,6 +12,7 @@ import edu.upenn.cis.cis455.storage.StorageFactory;
 import edu.upenn.cis.cis455.storage.StorageInterface;
 import edu.upenn.cis.cis455.crawler.handlers.LoginHandler;
 import edu.upenn.cis.cis455.crawler.handlers.LogoutHandler;
+import edu.upenn.cis.cis455.crawler.handlers.LookupHandler;
 import edu.upenn.cis.cis455.crawler.handlers.RegistrationHandler;
 
 public class WebInterface {
@@ -47,6 +48,7 @@ public class WebInterface {
         get("/index.html", homeHandler);
         get("/", homeHandler);
         get("/logout", new LogoutHandler());
+        get("/lookup", new LookupHandler(database));
         post("/register", new RegistrationHandler(database));
         post("/login", new LoginHandler(database));
         
