@@ -46,7 +46,6 @@ public class Crawler implements CrawlMaster {
     }
 
     boolean shouldCrawl(HttpResponse res) {
-        // TODO: check if there are any other ok statuses
         if (!HttpUtils.isOk(res.status)) {
             logger.debug("Request had status {}", res.status);
             return false;
@@ -74,19 +73,26 @@ public class Crawler implements CrawlMaster {
                 String nextUrlString = nextUrl.toString();
                 URL url = new URL(nextUrlString);
                 HttpResponse headRes = HttpUtils.fetch(url, "HEAD");
+                // Check if modified since to see if we should even bother fetching?
                 if (!shouldCrawl(headRes)) {
                     logger.debug("Skipping URL {} because of HEAD response", nextUrlString);
                     continue;
                 }
                 HttpResponse getRes = HttpUtils.fetch(url, "GET");
                 // TODO: check whether should store in DB based on content seen table
-                // TODO: null body?
+                boolean isNewContent = db.addDocument(nextUrlString, getRes.body);
+                if (!isNewContent) {
+                    // TODO: differentiate between if we've extracted same URL before
+                    // and if we've extracted same content before
+                    logger.info("{}: not modified", nextUrlString);
+                    continue;
+                }
                 logger.info("{}: downloading", nextUrlString);
                 if (!shouldCrawl(getRes)) {
                     logger.debug("Skipping URL {} because of GET response", nextUrlString);
                     continue;
                 }
-                // Only extract links for html documents
+                // Only extract links for unseen before html documents
                 if (getRes.contentType != null
                         && getRes.contentType.equalsIgnoreCase("text/html")) {
                     List<URLInfo> links = HttpUtils.extractLinks(getRes.body, nextUrlString);

@@ -26,13 +26,19 @@ public class Storage implements StorageInterface {
     static final String JAVA_CATALOG = "java_catalog";
     static final String USER_STORE = "user_store";
     static final String DOCUMENT_STORE = "document_store";
+    static final String CONTENT_SEEN_STORE = "content_seen_store";
 
     StoredClassCatalog javaCatalog;
     Database userStore;
     Database documentStore;
+    Database contentSeenStore;
 
+    // username -> SHA 256 password
     StoredSortedMap<String, String> userMap;
+    // url -> DocumentValue
     StoredSortedMap<String, DocumentValue> documentMap;
+    // MD5 hash of document -> first url it came from
+    StoredSortedMap<String, String> contentSeenMap;
 
     public Storage(String directory) {
         try {
@@ -49,6 +55,12 @@ public class Storage implements StorageInterface {
             javaCatalog = new StoredClassCatalog(catalogDb);
             userStore = env.openDatabase(null, USER_STORE, dbConfig);
             documentStore = env.openDatabase(null, DOCUMENT_STORE, dbConfig);
+            // Content seen store is temporary and requires its own dbConfig
+            // env.removeDatabase(null, CONTENT_SEEN_STORE);
+            DatabaseConfig tempDbConfig = new DatabaseConfig();
+            tempDbConfig.setAllowCreate(true);
+            tempDbConfig.setTemporary(true);
+            contentSeenStore = env.openDatabase(null, CONTENT_SEEN_STORE, tempDbConfig);
 
             // Bind stored sorted maps to the databases
             EntryBinding<String> userKeyBinding = new SerialBinding<String>(javaCatalog,
@@ -63,12 +75,24 @@ public class Storage implements StorageInterface {
                     javaCatalog, DocumentValue.class);
             documentMap = new StoredSortedMap<String, DocumentValue>(documentStore,
                     documentKeyBinding, documentValueBinding, true);
+            EntryBinding<String> contentSeenKeyBinding = new SerialBinding<String>(javaCatalog,
+                    String.class);
+            EntryBinding<String> contentSeenValueBinding = new SerialBinding<String>(javaCatalog,
+                    String.class);
+            contentSeenMap = new StoredSortedMap<String, String>(contentSeenStore,
+                    contentSeenKeyBinding, contentSeenValueBinding, true);
 
         } catch (Exception e) {
             logger.fatal("Could not create database environment with directory {}: {}", directory,
                     e.toString());
             System.exit(1);
         }
+        
+        
+        logger.debug("State of DB at start of application------");
+        logger.debug(mapToString("Documents", documentMap.entrySet().iterator()));
+        logger.debug(mapToString("Users", userMap.entrySet().iterator()));
+        logger.debug(mapToString("Content seen (should be empty)", contentSeenMap.entrySet().iterator()));
     }
 
     @Override
@@ -79,10 +103,30 @@ public class Storage implements StorageInterface {
 
     // @768 can also use URL as the key for document content
     @Override
-    public void addDocument(String url, byte[] documentContents) {
-        // TODO: add content seen table and deal with aliases
-        DocumentValue value = new DocumentValue(System.currentTimeMillis(), documentContents);
+    public boolean addDocument(String url, byte[] documentContents) {
+        if (documentContents == null) {
+            logger.debug("No content found at {}, not adding url to db", url);
+            return false;
+        }
+        String digest = DigestUtils.md5Hex(documentContents);
+        if (contentSeenMap.containsKey(digest)) {
+            // We will NOT want to crawl it nor do we want to store an extra copy in DB
+            // Instead store an association to the URL
+            String urlWhereSeen = contentSeenMap.get(digest);
+            DocumentValue value = new DocumentValue(urlWhereSeen);
+            documentMap.put(url, value);
+            return false;
+        }
+        // For NEW content, we will store the document in DB and may crawl it if it's html
+        DocumentValue value = new DocumentValue(documentContents);
+        if (documentMap.containsKey(url)) {
+            // TODO: need special behaviour here?
+            logger.debug("Updating document at {} which we crawled before", url);
+        }
+        contentSeenMap.put(url, digest);
         documentMap.put(url, value);
+        
+        return true;
     }
 
     @Override
@@ -127,6 +171,7 @@ public class Storage implements StorageInterface {
         javaCatalog.close();
         userStore.close();
         documentStore.close();
+        contentSeenStore.close();
 
         env.close();
     }

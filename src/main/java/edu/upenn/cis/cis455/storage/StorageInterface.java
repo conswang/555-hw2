@@ -9,8 +9,11 @@ public interface StorageInterface {
 
     /**
      * Add a new document, getting its ID
+     * 
+     * @return true if the document has new content and we should crawl its links
+     *         (if it's html). False if document is in contentSeen table
      */
-    public void addDocument(String url, byte[] documentContents);
+    public boolean addDocument(String url, byte[] documentContents);
 
     /**
      * Retrieves a document's contents by URL
