@@ -2,9 +2,13 @@ package edu.upenn.cis.cis455.crawler.utils;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,14 +31,18 @@ public class HttpUtils {
         return 100 <= status && status < 400;
     }
 
+    static HttpURLConnection setUpConnection(URL url, String method) throws IOException {
+        // Cast also works for Https urls, because HttpsURLConnection is a subclass
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod(method);
+        connection.setRequestProperty("User-Agent", "cis455crawler");
+        // TODO: set request timeout?
+        return connection;
+    }
+
     public static HttpResponse fetch(URL url, String method) {
         try {
-            // Cast also works for Https urls, because HttpsURLConnection is a subclass
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod(method);
-            connection.setRequestProperty("User-Agent", "cis455crawler");
-            // TODO: set request timeout?
-
+            HttpURLConnection connection = setUpConnection(url, method);
             int status = connection.getResponseCode();
             long contentLength = connection.getContentLengthLong();
             String contentType = connection.getContentType();
@@ -52,6 +60,52 @@ public class HttpUtils {
         } catch (Exception e) {
             logger.error("Did not {} URL {}, other exception: ", method, url.toString(),
                     e.toString());
+        }
+        return null;
+    }
+
+    /**
+     * 
+     * @param urlInfo
+     * @param robotsCache   Robots.txt info on sites that do have one
+     * @param noRobotsCache Set of sites that don't have one
+     * @return Robots info if there is, null if there isn't
+     */
+    public Robots getRobots(URLInfo urlInfo, Map<String, Robots> robotsCache,
+            Set<String> noRobotsCache) {
+        String robotsAddress = urlInfo.getRobotsTxt();
+        if (robotsCache.containsKey(robotsAddress)) {
+            return robotsCache.get(robotsAddress);
+        }
+        URL url;
+        try {
+            url = new URL(robotsAddress);
+        } catch (MalformedURLException e) {
+            logger.error(
+                    "Could not construct url to get robots txt of website; very bad or href had malformed string{}",
+                    e.toString());
+            return null;
+        }
+
+        try {
+            HttpURLConnection conn = setUpConnection(url, "GET");
+            int status = conn.getResponseCode();
+            // TODO: google follows redirects for robots.txt for up to 5 hops?
+            if (!isOk(status)) {
+                logger.debug("Could not find robots.txt file, will ignore and continue crawling");
+                noRobotsCache.add(robotsAddress);
+                return null;
+            }
+            try {
+                Robots robots = new Robots(conn.getInputStream());
+                robotsCache.put(robotsAddress, robots);
+            } catch (ParseException e) {
+                logger.debug("Could not parse robots.txt file, will ignore and continue crawling");
+                noRobotsCache.add(robotsAddress);
+                return null;
+            }
+        } catch (IOException e) {
+            logger.error("Could not open connection {}", e.toString());
         }
         return null;
     }

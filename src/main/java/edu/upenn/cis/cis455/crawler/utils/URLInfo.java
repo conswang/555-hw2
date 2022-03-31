@@ -104,4 +104,8 @@ public class URLInfo {
     public String toString() {
         return (isSecure ? "https://" : "http://") + hostName + ":" + portNo + filePath;
     }
+    
+    public String getRobotsTxt() {
+        return (isSecure ? "https://" : "http://") + hostName + ":" + portNo + "/robots.txt";
+    }
 }

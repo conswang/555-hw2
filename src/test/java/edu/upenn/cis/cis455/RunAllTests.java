@@ -9,9 +9,10 @@ public class RunAllTests extends TestCase
   public static Test suite() 
   {
     try {
-      Class[]  testClasses = {
+      Class[] testClasses = {
         /* TODO: Add the names of your unit test classes here */
         // Class.forName("your.class.name.here") 
+        CrawlerTests.class
       };   
       
       return new TestSuite(testClasses);

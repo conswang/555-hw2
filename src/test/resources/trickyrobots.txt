@@ -1,0 +1,20 @@
+# Tricky robots file
+
+User-agent: veryBadBot # a group
+Disallow: /
+Crawl-delay: 5
+
+User-agent: * # has comments all over the place
+User-agent: meow # more comments
+User-agent: cis455crawler # also has multiple user-agents in group
+Allow: /
+Disallow: /a/*
+Disallow: /mail?hl=*
+Disallow: /tasks/*
+Crawl-delay: 10 # some crawl delay here
+
+# extra comments and spaces for no reason
+
+# hi
+
+Sitemap: https://www.google.com/gmail/sitemap.xml

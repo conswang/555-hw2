@@ -26,7 +26,7 @@ public class LookupHandler implements Route {
             halt(404, "Document at " + url + " not found :<");
         }
         // No need to set content-type header, Spark/browser can probe it
-        return new String(contents);
+        return contents;
     }
 
 }
