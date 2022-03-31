@@ -26,7 +26,11 @@ public class Robots {
     static String getValue(String line, String key) {
         // Eg. "User-agent: cis455crawler #455 crawler" -> "cis455crawler"
         String rightSide = line.substring(key.length()).trim();
-        return rightSide.substring(0, rightSide.indexOf('#'));
+        int commentStart = rightSide.indexOf('#');
+        if (commentStart == -1) {
+            return rightSide;
+        }
+        return rightSide.substring(0, commentStart).trim();
     }
 
     void readGroup(BufferedReader reader) throws IOException {
@@ -87,6 +91,7 @@ public class Robots {
                 }
             }
         }
+        logger.debug("Done");
         this.timeLastCrawled = System.currentTimeMillis();
     }
 
