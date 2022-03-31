@@ -8,9 +8,9 @@ User-agent: * # has comments all over the place
 User-agent: meow # more comments
 User-agent: cis455crawler # also has multiple user-agents in group
 Allow: /
-Disallow: /a/*
-Disallow: /mail?hl=*
-Disallow: /tasks/*
+Disallow: /a
+Disallow: /mail
+Disallow: /tasks/fluffypuffy
 Crawl-delay: 10 # some crawl delay here
 
 # extra comments and spaces for no reason

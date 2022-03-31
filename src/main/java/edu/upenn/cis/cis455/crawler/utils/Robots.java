@@ -9,11 +9,15 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Robots {
-    public int crawlDelaySeconds = 0;
-    public long timeLastCrawled;
-    public List<String> disallowPaths;
+    final static Logger logger = LogManager.getLogger(Robots.class);
+    
+    int crawlDelaySeconds = 0;
+    long timeLastCrawled;
+    List<String> disallowPaths;
 
     final static String USER_AGENT = "User-agent:";
     final static String DISALLOW = "Disallow:";
@@ -26,10 +30,12 @@ public class Robots {
     }
 
     void readGroup(BufferedReader reader) throws IOException {
+        logger.debug("Reading group");
         List<String> groupDisallow = new LinkedList<String>();
         String line;
 
         while ((line = reader.readLine()) != null && !line.equals("")) {
+            logger.debug(line);
             if (line.startsWith("#")) {
                 continue; // ignore comments
             }
@@ -49,10 +55,23 @@ public class Robots {
         this.disallowPaths = groupDisallow;
     }
 
+    public int crawlDelaySeconds() {
+        return crawlDelaySeconds;
+    }
+
+    public long timeLastCrawled() {
+        return timeLastCrawled;
+    }
+
+    public List<String> disallowPaths() {
+        return disallowPaths;
+    }
+
     public Robots(InputStream responseBody) throws ParseException, IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody));
         String line;
         while ((line = reader.readLine()) != null) {
+            logger.debug(line);
             if (line.startsWith("#")) {
                 continue; // ignore comments
             }
