@@ -5,11 +5,12 @@ import java.io.Serializable;
 public class DocumentValue implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    long timeLastCrawled;
+    public long timeLastCrawled;
     // If alias not null, then it points to original URL with same content
     // Otherwise if alias is null, look at content
     String alias = null;
-    byte[] content = null;
+    public byte[] content = null;
+    public String contentType = null;
 
     public DocumentValue(String alias) {
         // TODO: technically to be more accurate, we should pass in response date header
@@ -19,9 +20,10 @@ public class DocumentValue implements Serializable {
         this.alias = alias;
     }
 
-    public DocumentValue(byte[] content) {
+    public DocumentValue(byte[] content, String contentType) {
         this.timeLastCrawled = System.currentTimeMillis();
         this.content = content;
+        this.contentType = contentType;
     }
 
     public boolean isAlias() {

@@ -53,7 +53,8 @@ public class HttpUtils {
             } else {
                 body = connection.getErrorStream().readAllBytes();
             }
-            return new HttpResponse(status, contentLength, contentType, body);
+            long lastModified = connection.getHeaderFieldDate("Last-Modified", 0);
+            return new HttpResponse(status, contentLength, contentType, body, lastModified);
         } catch (IOException e) {
             logger.error("Did not {} URL {}, failed to open connection/connect {}", method,
                     url.toString(), e.toString());
@@ -71,7 +72,7 @@ public class HttpUtils {
      * @param noRobotsCache Set of sites that don't have one
      * @return Robots info if there is, null if there isn't
      */
-    public Robots getRobots(URLInfo urlInfo, Map<String, Robots> robotsCache,
+    public static Robots getRobots(URLInfo urlInfo, Map<String, Robots> robotsCache,
             Set<String> noRobotsCache) {
         String robotsAddress = urlInfo.getRobotsTxt();
         if (robotsCache.containsKey(robotsAddress)) {
@@ -110,6 +111,10 @@ public class HttpUtils {
         return null;
     }
 
+    public static boolean isHtml(String contentType) {
+        return contentType != null && contentType.equalsIgnoreCase("text/html");
+    }
+
     public static List<URLInfo> extractLinks(byte[] body, String baseUri) {
         List<URLInfo> res = new LinkedList<URLInfo>();
         String html = new String(body);
@@ -120,7 +125,7 @@ public class HttpUtils {
             String linkString = link.attr("abs:href");
             URLInfo urlInfo = new URLInfo(linkString);
             res.add(urlInfo);
-            logger.debug("JSoup parsed link {} from website {}", linkString, baseUri);
+//            logger.debug("JSoup parsed link {} from website {}", linkString, baseUri);
         }
         return res;
     }

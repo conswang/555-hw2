@@ -1,5 +1,6 @@
 package edu.upenn.cis.cis455.crawler.handlers;
 
+import edu.upenn.cis.cis455.storage.DocumentValue;
 import edu.upenn.cis.cis455.storage.StorageInterface;
 import spark.HaltException;
 import spark.Request;
@@ -21,12 +22,12 @@ public class LookupHandler implements Route {
         if (url == null) {
             halt(400, "Missing url query parameter :<");
         }
-        byte[] contents = db.getDocument(url);
+        DocumentValue contents = db.getDocument(url);
         if (contents == null) {
             halt(404, "Document at " + url + " not found :<");
         }
         // No need to set content-type header, Spark/browser can probe it
-        return contents;
+        return contents.content;
     }
 
 }

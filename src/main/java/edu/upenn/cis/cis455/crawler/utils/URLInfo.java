@@ -1,5 +1,7 @@
 package edu.upenn.cis.cis455.crawler.utils;
 
+import java.util.Objects;
+
 /**
  * Helper class that shows how to parse URLs to obtain host name, port number
  * and file path
@@ -55,6 +57,24 @@ public class URLInfo {
             hostName = address;
             portNo = isSecure ? 443 : 80;
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(filePath, hostName, isSecure, portNo);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        URLInfo other = (URLInfo) obj;
+        return Objects.equals(filePath, other.filePath) && Objects.equals(hostName, other.hostName)
+                && isSecure == other.isSecure && portNo == other.portNo;
     }
 
     public URLInfo(String hostName, String filePath) {

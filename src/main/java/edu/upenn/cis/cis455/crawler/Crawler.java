@@ -2,16 +2,22 @@ package edu.upenn.cis.cis455.crawler;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import edu.upenn.cis.cis455.crawler.utils.HttpResponse;
 import edu.upenn.cis.cis455.crawler.utils.HttpUtils;
+import edu.upenn.cis.cis455.crawler.utils.Robots;
 import edu.upenn.cis.cis455.crawler.utils.URLInfo;
+import edu.upenn.cis.cis455.storage.DocumentValue;
 import edu.upenn.cis.cis455.storage.StorageFactory;
 import edu.upenn.cis.cis455.storage.StorageInterface;
 
@@ -25,6 +31,9 @@ public class Crawler implements CrawlMaster {
     // is in content seen table
     Queue<URLInfo> urls;
     StorageInterface db;
+    Map<String, Robots> robotsCache; // base url (not inclu. file path) -> robots info
+    Set<String> noRobotsCache; // set of base urls
+
     long maxContentSizeBytes;
     // Stop crawling when count = maxDocSize
     int count = 0;
@@ -39,6 +48,9 @@ public class Crawler implements CrawlMaster {
         this.db = db;
         this.maxContentSizeBytes = 1024 * 1024 * maxContentSizeMegabytes;
         this.numToCrawl = numToCrawl;
+
+        robotsCache = new HashMap<String, Robots>();
+        noRobotsCache = new HashSet<String>();
     }
 
     boolean shouldCrawl(HttpResponse res) {
@@ -57,44 +69,100 @@ public class Crawler implements CrawlMaster {
         return true;
     }
 
+    boolean checkRobots(URLInfo nextUrl) {
+        // @806 1. it should first check if it can be crawled by checking the robot.txt
+        // file
+        Robots robotsInfo = HttpUtils.getRobots(nextUrl, robotsCache, noRobotsCache);
+        if (robotsInfo == null) {
+            logger.debug("Robots.txt not found, will continue to fetch {}", nextUrl.toString());
+            return true;
+        } else {
+            if (robotsInfo.isDisallowed(nextUrl)) {
+                logger.debug(
+                        "cis455crawler is disallowed from fetching {}. Not incrementing current document count, which is {}",
+                        nextUrl.toString(), count);
+                return false;
+            }
+            if (!robotsInfo.crawl()) {
+                // @806 2. then it should check if it needs to delay crawl, if it needs to
+                // delay crawl, add the URL back to the end of the queue
+//                logger.debug(
+//                        "Putting url {} back in the end of queue because of crawl delay",
+//                        nextUrlString);
+                // TODO: fix "busy wait" when no websites are crawlable
+                urls.add(nextUrl);
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    void extractLinks(byte[] html, String url) {
+        List<URLInfo> links = HttpUtils.extractLinks(html, url);
+        urls.addAll(links);
+    }
+
     /**
      * Main thread
      */
     public void start() {
         while (!urls.isEmpty() && !isDone()) {
+//            logger.debug("---------------begin crawl loop-----------------------");
             URLInfo nextUrl = urls.poll();
-            incCount();
 
             try {
-                String nextUrlString = nextUrl.toString();
-                URL url = new URL(nextUrlString);
-                HttpResponse headRes = HttpUtils.fetch(url, "HEAD");
-                // Check if modified since to see if we should even bother fetching?
-                if (!shouldCrawl(headRes)) {
-                    logger.debug("Skipping URL {} because of HEAD response", nextUrlString);
+                String urlString = nextUrl.toString();
+                URL url = new URL(urlString);
+
+                if (!checkRobots(nextUrl)) {
                     continue;
-                }
-                HttpResponse getRes = HttpUtils.fetch(url, "GET");
-                // TODO: check whether should store in DB based on content seen table
-                boolean isNewContent = db.addDocument(nextUrlString, getRes.body);
-                if (!isNewContent) {
-                    // TODO: differentiate between if we've extracted same URL before
-                    // and if we've extracted same content before
-                    logger.info("{}: not modified", nextUrlString);
-                    continue;
-                }
-                logger.info("{}: downloading", nextUrlString);
-                if (!shouldCrawl(getRes)) {
-                    logger.debug("Skipping URL {} because of GET response", nextUrlString);
-                    continue;
-                }
-                // Only extract links for unseen before html documents
-                if (getRes.contentType != null
-                        && getRes.contentType.equalsIgnoreCase("text/html")) {
-                    List<URLInfo> links = HttpUtils.extractLinks(getRes.body, nextUrlString);
-                    urls.addAll(links);
                 }
 
+                HttpResponse headRes = HttpUtils.fetch(url, "HEAD");
+                if (!shouldCrawl(headRes)) {
+                    logger.debug("Skipping URL {} because of HEAD response", urlString);
+                    continue;
+                }
+
+                incCount();
+
+                DocumentValue storedDocument = db.getDocument(urlString);
+
+                // @806 3.2 If it has been crawled but modified, it should get its content.
+                // @806 3.3 If it has not been crawled before, then download content
+                if (storedDocument == null
+                        || storedDocument.timeLastCrawled < headRes.lastModified) {
+                    HttpResponse getRes = HttpUtils.fetch(url, "GET");
+                    if (!shouldCrawl(getRes)) {
+                        logger.debug("Skipping URL {} because of GET response", urlString);
+                        continue;
+                    }
+                    // @806 3.5 Will update the corpus if the content has not been seen
+                    boolean isNewContent = db.addDocument(urlString, getRes.body,
+                            getRes.contentType);
+                    if (!isNewContent) {
+                        // We've extracted same content before (not necessarily from same url)
+                        // @806 3.4 If the MD5 hashed content is seen, do nothing.
+                        logger.info("{}: not modified", urlString);
+                        logger.debug("Content seen in table already, do NOT crawl again");
+                        continue;
+                    } else {
+                        logger.info("{}: downloading", urlString);
+                        if (HttpUtils.isHtml(getRes.contentType)) {
+                            extractLinks(getRes.body, urlString);
+                        }
+                    }
+                } else {
+                    // @806 3.1 If it has been crawled before and not modified, check outgoing
+                    // links.
+                    logger.info("{}: not modified", urlString);
+                    // Also check if content was seen in this crawler run
+                    if (HttpUtils.isHtml(storedDocument.contentType)
+                            && !db.contentSeen(storedDocument.content)) {
+                        extractLinks(storedDocument.content, urlString);
+                    }
+                }
             } catch (MalformedURLException e) {
                 logger.error("Skipping URL {}, failed to parse url string", e.toString());
                 continue;

@@ -46,9 +46,10 @@ public class Storage implements StorageInterface {
             envConfig.setAllowCreate(true);
             env = new Environment(new File(directory), envConfig);
             
+//            env.removeDatabase(null, JAVA_CATALOG);
 //            env.removeDatabase(null, CONTENT_SEEN_STORE);
-//            env.removeDatabase(null, USER_STORE);
-//            env.removeDatabase(null, DOCUMENT_STORE);
+            env.removeDatabase(null, USER_STORE);
+            env.removeDatabase(null, DOCUMENT_STORE);
 
             // Create class catalog database and other databases
             // TODO: need to customize dbConfig more?
@@ -103,10 +104,16 @@ public class Storage implements StorageInterface {
         // TODO Auto-generated method stub
         return 0;
     }
+    
+    @Override
+    public boolean contentSeen(byte[] documentContents) {
+        String digest = DigestUtils.md5Hex(documentContents);
+        return contentSeenMap.containsKey(digest);
+    }
 
     // @768 can also use URL as the key for document content
     @Override
-    public boolean addDocument(String url, byte[] documentContents) {
+    public boolean addDocument(String url, byte[] documentContents, String contentType) {
         if (documentContents == null) {
             logger.debug("No content found at {}, not adding url to db", url);
             return false;
@@ -121,7 +128,7 @@ public class Storage implements StorageInterface {
             return false;
         }
         // For NEW content, we will store the document in DB and may crawl it if it's html
-        DocumentValue value = new DocumentValue(documentContents);
+        DocumentValue value = new DocumentValue(documentContents, contentType);
         if (documentMap.containsKey(url)) {
             // TODO: need special behaviour here?
             logger.debug("Updating document at {} which we crawled before", url);
@@ -133,13 +140,13 @@ public class Storage implements StorageInterface {
     }
 
     @Override
-    public byte[] getDocument(String url) {
+    public DocumentValue getDocument(String url) {
         DocumentValue value = documentMap.get(url);
         if (value == null) {
             return null;
         }
         if (!value.isAlias()) {
-            return value.content;
+            return value;
         }
         // This should only go 1 layer deep since all urls will just reference the original one
         return getDocument(value.alias);

@@ -14,9 +14,9 @@ import org.apache.logging.log4j.Logger;
 
 public class Robots {
     final static Logger logger = LogManager.getLogger(Robots.class);
-    
+
     int crawlDelaySeconds = 0;
-    long timeLastCrawled;
+    long timeLastCrawled = 0;
     List<String> disallowPaths;
 
     final static String USER_AGENT = "User-agent:";
@@ -34,7 +34,6 @@ public class Robots {
     }
 
     void readGroup(BufferedReader reader) throws IOException {
-        logger.debug("Reading group");
         List<String> groupDisallow = new LinkedList<String>();
         String line;
 
@@ -71,11 +70,32 @@ public class Robots {
         return disallowPaths;
     }
 
+    public boolean isDisallowed(URLInfo url) {
+        // TODO: this may need to be more robust
+        String path = url.getFilePath();
+        for (String disallowPath : disallowPaths) {
+            if (path.startsWith(disallowPath)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Return true if can crawl and update crawl time, just return false and do
+    // nothing else if can't crawl due to crawl delay
+    public boolean crawl() {
+        boolean canCrawl = (System.currentTimeMillis() - timeLastCrawled)
+                / 1000 > crawlDelaySeconds;
+        if (canCrawl) {
+            timeLastCrawled = System.currentTimeMillis();
+        }
+        return canCrawl;
+    }
+
     public Robots(InputStream responseBody) throws ParseException, IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody));
         String line;
         while ((line = reader.readLine()) != null) {
-            logger.debug(line);
             if (line.startsWith("#")) {
                 continue; // ignore comments
             }
@@ -91,7 +111,6 @@ public class Robots {
                 }
             }
         }
-        logger.debug("Done");
         this.timeLastCrawled = System.currentTimeMillis();
     }
 

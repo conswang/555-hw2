@@ -6,6 +6,8 @@ public interface StorageInterface {
      * How many documents so far?
      */
     public int getCorpusSize();
+    
+    public boolean contentSeen(byte[] documentContents);
 
     /**
      * Add a new document, getting its ID
@@ -13,12 +15,12 @@ public interface StorageInterface {
      * @return true if the document has new content and we should crawl its links
      *         (if it's html). False if document is in contentSeen table
      */
-    public boolean addDocument(String url, byte[] documentContents);
+    public boolean addDocument(String url, byte[] documentContents, String contentType);
 
     /**
      * Retrieves a document's contents by URL
      */
-    public byte[] getDocument(String url);
+    public DocumentValue getDocument(String url);
 
     /**
      * Adds a user and returns an ID
