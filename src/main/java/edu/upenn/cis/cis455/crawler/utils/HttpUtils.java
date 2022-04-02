@@ -32,6 +32,8 @@ public class HttpUtils {
     }
 
     static HttpURLConnection setUpConnection(URL url, String method) throws IOException {
+//        HttpURLConnection.setFollowRedirects(true);
+
         // Cast also works for Https urls, because HttpsURLConnection is a subclass
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method);
@@ -77,6 +79,8 @@ public class HttpUtils {
         String robotsAddress = urlInfo.getRobotsTxt();
         if (robotsCache.containsKey(robotsAddress)) {
             return robotsCache.get(robotsAddress);
+        } else if (noRobotsCache.contains(robotsAddress)) {
+            return null;
         }
         URL url;
         try {
@@ -100,6 +104,7 @@ public class HttpUtils {
             try {
                 Robots robots = new Robots(conn.getInputStream());
                 robotsCache.put(robotsAddress, robots);
+                return robots;
             } catch (ParseException e) {
                 logger.debug("Could not parse robots.txt file, will ignore and continue crawling");
                 noRobotsCache.add(robotsAddress);

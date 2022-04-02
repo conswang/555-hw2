@@ -47,9 +47,8 @@ public class Storage implements StorageInterface {
             env = new Environment(new File(directory), envConfig);
             
 //            env.removeDatabase(null, JAVA_CATALOG);
-//            env.removeDatabase(null, CONTENT_SEEN_STORE);
-            env.removeDatabase(null, USER_STORE);
-            env.removeDatabase(null, DOCUMENT_STORE);
+//            env.removeDatabase(null, USER_STORE);
+//            env.removeDatabase(null, DOCUMENT_STORE);
 
             // Create class catalog database and other databases
             // TODO: need to customize dbConfig more?
